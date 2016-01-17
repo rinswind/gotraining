@@ -1,4 +1,5 @@
 Content of the wiki:
-[test]
+[hello]
 [something]
 [test]
+[anoter]

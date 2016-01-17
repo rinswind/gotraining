@@ -1,5 +1,8 @@
+<!DOCTYPE html>
+<html>
+<body>
 <h1>{{.Title}}</h1>
-
 <p>[<a href="/edit/{{.Title}}">edit</a>]</p>
-
-<p>{{printf "%s" .Body}}</p>
+<p>{{.Render}}</p>
+</body>
+</html>

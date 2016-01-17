@@ -12,12 +12,12 @@ type Page struct {
 	Body  []byte
 }
 
-func (p *Page) save(dir string) error {
-	filename := dir + "/" + p.Title + ".txt"
-	return ioutil.WriteFile(filename, p.Body, 0600)
+type rendering struct {
+	Matcher     regexp.Regexp
+	Replacement []byte
 }
 
-func loadPage(title, dir string) (*Page, error) {
+func LoadPage(title, dir string) (*Page, error) {
 	filename := dir + "/" + title + ".txt"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -26,26 +26,45 @@ func loadPage(title, dir string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
+func (p *Page) Save(dir string) error {
+	filename := dir + "/" + p.Title + ".txt"
+	return ioutil.WriteFile(filename, p.Body, 0600)
+}
+
+func (p *Page) Render() template.HTML {
+	html := p.Body
+	for _, format := range *renderings {
+		html = format.Matcher.ReplaceAll(html, format.Replacement)
+	}
+	return template.HTML(html)
+}
+
+func parseRenderings(fmtMap map[string]string) *[]rendering {
+	fmtList := make([]rendering, len(fmtMap))
+	i := 0
+	for k, v := range fmtMap {
+		fmtList[i] = rendering{*regexp.MustCompile(k), []byte(v)}
+		i++
+	}
+	return &fmtList
+}
+
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/view/FrontPage", http.StatusFound)
 }
 
-var validLink = regexp.MustCompile("\\[([[:word:]]+)\\]")
-
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title, "data")
+	p, err := LoadPage(title, "data")
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
 
-	p.Body = validLink.ReplaceAll(p.Body, []byte("<a href=\"/view/$1\">$1</a>"))
-
 	renderTemplate(w, "view", p)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title, "data")
+	p, err := LoadPage(title, "data")
 	if err != nil {
 		p = &Page{Title: title}
 	}
@@ -55,7 +74,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
-	err := p.save("data")
+	err := p.Save("data")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -65,6 +84,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 
+var renderings = parseRenderings(map[string]string{
+	"\\[([[:word:]]+)\\]": "<a href=\"/view/$1\">$1</a>",
+	"\\n": "<br/>",
+})
+
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
@@ -72,7 +96,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view)/([[:word:]]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
