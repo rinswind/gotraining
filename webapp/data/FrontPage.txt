@@ -1,0 +1,4 @@
+Content of the wiki:
+[test]
+[something]
+[test]
