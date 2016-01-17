@@ -18,13 +18,13 @@ func fibonacci(c chan int, quit chan bool) {
 func main() {
 	c := make(chan int)
 	quit := make(chan bool)
-	
+
 	go func() {
 		for i := 0; i < 10; i++ {
 			fmt.Println(<-c)
 		}
 		quit <- true
 	}()
-	
+
 	fibonacci(c, quit)
 }

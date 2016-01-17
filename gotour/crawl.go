@@ -11,7 +11,7 @@ type Fetcher interface {
 }
 
 type visit struct {
-	url string
+	url   string
 	links []string
 	depth int
 }
@@ -21,14 +21,14 @@ type visit struct {
 func Crawl(url string, depth int, fetcher Fetcher) {
 	visits := make(map[string]visit)
 	ch := make(chan visit)
-	
+
 	go crawl(url, depth, fetcher, ch)
 
 	for started := 1; started > 0; {
 		v := <-ch
 		visits[v.url] = v
 		started--
-		
+
 		if v.depth > 0 {
 			for _, next := range v.links {
 				if _, visited := visits[next]; !visited {

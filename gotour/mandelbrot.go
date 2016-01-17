@@ -4,7 +4,7 @@ import (
 	"golang.org/x/tour/pic"
 	"image"
 	"image/color"
-	"math/cmplx"	
+	"math/cmplx"
 )
 
 type Image struct {
@@ -27,20 +27,20 @@ func (this *Image) At(x, y int) color.Color {
 
 func mandelbrot(col, row, width, height int) int {
 	const max = 255
-	
+
 	fc := float64(col)
 	fr := float64(row)
 	fh := float64(width)
 	fw := float64(height)
-	
-	c := complex((fc - fw/2)*4/fw, (fr - fh/2)*4/fw)
+
+	c := complex((fc-fw/2)*4/fw, (fr-fh/2)*4/fw)
 	z := c
-	
+
 	iter := 0
-	for ;cmplx.Abs(z) <= 2 && iter < max; iter++ {
+	for ; cmplx.Abs(z) <= 2 && iter < max; iter++ {
 		z = z*z + c
 	}
-	
+
 	if iter < max {
 		return iter
 	} else {

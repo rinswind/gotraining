@@ -9,9 +9,9 @@ import (
 type String string
 
 type Struct struct {
-    Greeting string
-    Punct    string
-    Who      string
+	Greeting string
+	Punct    string
+	Who      string
 }
 
 func (this String) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
